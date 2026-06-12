@@ -25,15 +25,12 @@ completion: ChatCompletion = client.chat.completions.create(
     # messages=[
     #     {
     #         "role": "user",
-    #         # "content": "Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum."
+    #         "content": "Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum."
     #         "content": args.user_prompt
     #     }
     # ]
     messages=messages
 )
-
-
-
 
 def main():
     if args.verbose:
