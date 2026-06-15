@@ -1,8 +1,15 @@
 import os
+import json
 from openai import OpenAI
 from dotenv import load_dotenv
 import argparse
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletion
+from prompt import system_prompt
+from functions.get_files_info import schema_get_files_info
+from functions.get_file_content import schema_get_file_content
+from functions.write_file import schema_write_file
+from functions.run_python_file import schema_run_python_file
+
 
 load_dotenv()
 
@@ -16,7 +23,10 @@ parser.add_argument("user_prompt", type=str, help="User prompt")
 parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
 args = parser.parse_args()
 
+
+
 messages: list[ChatCompletionMessageParam] = [
+    {"role": "system", "content": system_prompt},
     {"role":"user", "content": args.user_prompt}
 ]
 
@@ -29,7 +39,8 @@ completion: ChatCompletion = client.chat.completions.create(
     #         "content": args.user_prompt
     #     }
     # ]
-    messages=messages
+    messages=messages,
+    tools=[schema_get_files_info, schema_get_file_content, schema_write_file, schema_run_python_file]
 )
 
 def main():
@@ -37,9 +48,16 @@ def main():
         print(f"User prompt: {args.user_prompt}")
         print(f"Prompt tokens: {completion.usage.prompt_tokens}")
         print(f"Response tokens: {completion.usage.completion_tokens}")
-        print(f"Response: {completion.choices[0].message.content}")
+
+    message = completion.choices[0].message
+    tool_calls = message.tool_calls
+
+    if tool_calls:
+        for tool_call in tool_calls:
+            fn = tool_call.function
+            print(f"Calling function: {fn.name}({json.loads(fn.arguments)})")
     else:
-        print(f"Response: {completion.choices[0].message.content}")
+        print(f"Response: {message.content}")
 
 
 if __name__ == "__main__":
